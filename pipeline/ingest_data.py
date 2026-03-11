@@ -53,6 +53,7 @@ def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, ch
         dtype=dtype,
         parse_dates=parse_dates,
         iterator=True,
+        nrows=100000,
         chunksize=chunksize,
     )
 
