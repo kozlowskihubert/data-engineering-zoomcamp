@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+print("BUILD_MARKER_2026_03_11_A")
 import click
 import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
+import pyarrow.parquet as pq
 
 dtype = {
     "VendorID": "Int64",
@@ -40,12 +41,12 @@ parse_dates = [
 @click.option('--year', default=2021, type=int, help='Year of the data')
 @click.option('--month', default=1, type=int, help='Month of the data')
 @click.option('--target-table', default='yellow_taxi_data', help='Target table name')
-@click.option('--chunksize', default=100000, type=int, help='Chunk size for reading CSV')
+@click.option('--chunksize', default=10000, type=int, help='Chunk size for reading CSV')
 def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, chunksize):
     """Ingest NYC taxi data into PostgreSQL database."""
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow'
     url = f'{prefix}/yellow_tripdata_{year}-{month:02d}.csv.gz'
-
+    
     engine = create_engine(f'postgresql+psycopg://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}')
 
     df_iter = pd.read_csv(
@@ -56,6 +57,22 @@ def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, ch
         nrows=100000,
         chunksize=chunksize,
     )
+
+    # parquet_file = pq.ParquetFile(
+    #     "green_tripdata_2025-11.parquet"
+    # )
+    # df_iter = (
+    #     batch.to_pandas().astype(dtype)
+    #     for batch in parquet_file.iter_batches(batch_size=chunksize)
+    # )
+
+    df_iter = pd.read_csv(
+        "taxi_zone_lookup.csv",
+        iterator=True,
+        nrows=100000,
+        chunksize=chunksize,
+    )
+
 
     first = True
 

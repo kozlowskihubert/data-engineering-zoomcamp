@@ -1,13 +1,14 @@
 FROM python:3.13.11
-
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 
 WORKDIR /code
+ENV PATH="/code/.venv/bin:$PATH"
 
-ENV PATH="/app/.venv/bin:$PATH"
+COPY pyproject.toml .python-version uv.lock ./
+RUN uv sync --locked
 
-COPY pyproject.toml .python-version uv.lock
+COPY ingest_data.py .
+COPY green_tripdata_2025-11.parquet .
+COPY taxi_zone_lookup.csv .
 
-COPY pipeline.py .
-
-ENTRYPOINT ["uv", "run", "python", "pipeline.py"]
+ENTRYPOINT ["python", "ingest_data.py"]
